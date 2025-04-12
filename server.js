@@ -1,47 +1,47 @@
 const express = require('express');
 const puppeteer = require('puppeteer');
 const app = express();
-const PORT = process.env.PORT || 3000;
-
-app.use(express.urlencoded({ extended: true }));
-app.use(express.json());
 
 app.get('/pdf', async (req, res) => {
+  const { entry } = req.query;
+  if (!entry) return res.status(400).send('Missing entry');
+
   const html = `
     <html>
-      <head>
-        <style>
-          body { font-family: 'Poppins', sans-serif; padding: 40px; }
-          h1 { color: #3d6cb6; }
-          .chart { margin: 2rem 0; }
-        </style>
-      </head>
+      <head><title>IGNITED Report</title></head>
       <body>
-        <h1>Your IGNITED Leadership Self-Assessment</h1>
-        <p>This report outlines your strengths and growth opportunities across the seven IGNITED traits.</p>
-        <div class="chart">[Radar chart image would go here]</div>
-        <p>Reflections coming soon...</p>
+        <h1>IGNITED Report for Entry ${entry}</h1>
+        <p>This is your test content.</p>
       </body>
     </html>
   `;
 
-  const browser = await puppeteer.launch({
-    headless: 'new',
-    args: ['--no-sandbox', '--disable-setuid-sandbox']
-  });
-  const page = await browser.newPage();
-  await page.setContent(html, { waitUntil: 'networkidle0' });
+  try {
+    const browser = await puppeteer.launch({
+      headless: 'new',
+      args: ['--no-sandbox', '--disable-setuid-sandbox']
+    });
+    const page = await browser.newPage();
+    await page.setContent(html, { waitUntil: 'networkidle0' });
+    const pdf = await page.pdf({ format: 'A4' });
 
-  const pdfBuffer = await page.pdf({ format: 'A4' });
-  await browser.close();
+    await browser.close();
 
-  res.set({
-    'Content-Type': 'application/pdf',
-    'Content-Disposition': 'attachment; filename=ignited-leader-report.pdf'
-  });
-  res.send(pdfBuffer);
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': `attachment; filename="ignited-report-entry-${entry}.pdf"`,
+      'Content-Length': pdf.length
+    });
+
+    res.send(pdf);
+  } catch (err) {
+    console.error('❌ PDF Generation Error:', err);
+    res.status(500).send('Failed to generate PDF');
+  }
 });
 
+// ✅ Make sure you're using process.env.PORT
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`🚀 Server is running on port ${PORT}`);
 });
