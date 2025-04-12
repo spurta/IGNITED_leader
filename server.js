@@ -1,38 +1,47 @@
-
 const express = require('express');
 const puppeteer = require('puppeteer');
-
 const app = express();
+const PORT = process.env.PORT || 3000;
+
+app.use(express.urlencoded({ extended: true }));
+app.use(express.json());
 
 app.get('/pdf', async (req, res) => {
-  const entryId = req.query.entry;
-  if (!entryId) return res.status(400).send('Missing entry');
-
-  const targetUrl = `https://leonpurton.com/ignited-results/?entry=${entryId}`;
+  const html = `
+    <html>
+      <head>
+        <style>
+          body { font-family: 'Poppins', sans-serif; padding: 40px; }
+          h1 { color: #3d6cb6; }
+          .chart { margin: 2rem 0; }
+        </style>
+      </head>
+      <body>
+        <h1>Your IGNITED Leadership Self-Assessment</h1>
+        <p>This report outlines your strengths and growth opportunities across the seven IGNITED traits.</p>
+        <div class="chart">[Radar chart image would go here]</div>
+        <p>Reflections coming soon...</p>
+      </body>
+    </html>
+  `;
 
   const browser = await puppeteer.launch({
-    headless: true,
-    args: ['--no-sandbox', '--disable-setuid-sandbox'],
+    headless: 'new',
+    args: ['--no-sandbox', '--disable-setuid-sandbox']
   });
   const page = await browser.newPage();
-  await page.goto(targetUrl, { waitUntil: 'networkidle2' });
-  await page.waitForSelector('#reportContent', { timeout: 10000 });
+  await page.setContent(html, { waitUntil: 'networkidle0' });
 
-  const pdfBuffer = await page.pdf({
-    format: 'A4',
-    printBackground: true,
-    margin: { top: '1in', bottom: '1in', left: '0.5in', right: '0.5in' }
-  });
-
+  const pdfBuffer = await page.pdf({ format: 'A4' });
   await browser.close();
 
   res.set({
     'Content-Type': 'application/pdf',
-    'Content-Disposition': `attachment; filename="ignited-report-entry-${entryId}.pdf"`,
+    'Content-Disposition': 'attachment; filename=ignited-leader-report.pdf'
   });
-
   res.send(pdfBuffer);
 });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`PDF server running on port ${PORT}`));
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
