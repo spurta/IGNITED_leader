@@ -1,5 +1,8 @@
 const express = require('express');
-const puppeteer = require('puppeteer');
+const { readFileSync } = require('fs');
+const path = require('path');
+const { jsPDF } = require('jspdf');
+const { JSDOM } = require('jsdom');
 const app = express();
 
 app.get('/pdf', async (req, res) => {
@@ -10,40 +13,32 @@ app.get('/pdf', async (req, res) => {
   console.log(`📄 Generating PDF for entry ${entry}...`);
 
   try {
-    const browser = await puppeteer.launch({
-      headless: 'new',
-      args: ['--no-sandbox', '--disable-setuid-sandbox']
-    });
+    // Fetch content
+    const response = await fetch(reportUrl);
+    const html = await response.text();
 
-    const page = await browser.newPage();
-    await page.setViewport({ width: 1280, height: 1600 });
-    await page.goto(reportUrl, { waitUntil: 'networkidle2', timeout: 0 });
+    // Use jsdom to parse the HTML
+    const dom = new JSDOM(html);
+    const reportContent = dom.window.document.querySelector('#reportContent');
 
-    try {
-      await page.waitForSelector('#reportContent', { timeout: 15000 });
-      console.log("✅ Found #reportContent");
-    } catch (e) {
-      console.warn("⚠️ #reportContent not found in time, using manual delay...");
-      await page.waitForTimeout(5000);
-    }
+    if (!reportContent) throw new Error("#reportContent not found");
 
-    await page.waitForTimeout(1500);
+    // Prepare content
+    const doc = new jsPDF();
+    doc.setFont('helvetica');
+    doc.setFontSize(12);
+    doc.text("IGNITED Report", 10, 10);
+    doc.text(reportContent.textContent.trim(), 10, 20, { maxWidth: 190 });
 
-    const pdf = await page.pdf({
-      format: 'A4',
-      printBackground: true,
-      margin: { top: '1in', bottom: '1in', left: '0.5in', right: '0.5in' }
-    });
-
-    await browser.close();
-
+    // Finalize and send
+    const pdf = doc.output('arraybuffer');
     res.set({
       'Content-Type': 'application/pdf',
       'Content-Disposition': `attachment; filename="ignited-report-entry-${entry}.pdf"`,
-      'Content-Length': pdf.length
+      'Content-Length': pdf.byteLength
     });
+    res.send(Buffer.from(pdf));
 
-    res.send(pdf);
   } catch (err) {
     console.error('❌ PDF Generation Error:', err.message);
     res.status(500).send('Failed to generate PDF');
@@ -52,5 +47,5 @@ app.get('/pdf', async (req, res) => {
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`🚀 Puppeteer PDF server running on port ${PORT}`);
+  console.log(`🚀 jsPDF PDF server running on port ${PORT}`);
 });
