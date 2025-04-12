@@ -14,4 +14,3 @@
   "postinstall": "node node_modules/puppeteer/install.js"
 }
 
-}
