@@ -17,7 +17,8 @@ app.get('/pdf', async (req, res) => {
     const html = await response.text();
 
     const dom = new JSDOM(html);
-    const reportContent = dom.window.document.querySelector('#reportContent');
+    const { document } = dom.window;
+    const reportContent = document.querySelector('#reportContent');
 
     if (!reportContent) throw new Error("#reportContent not found");
 
