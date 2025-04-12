@@ -1,5 +1,6 @@
 const express = require('express');
-const puppeteer = require('puppeteer');
+const puppeteer = require('puppeteer-core');
+const chromium = require('chrome-aws-lambda');
 const app = express();
 
 app.get('/pdf', async (req, res) => {
@@ -11,17 +12,25 @@ app.get('/pdf', async (req, res) => {
 
   try {
     const browser = await puppeteer.launch({
-      headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox']
+      args: chromium.args,
+      defaultViewport: chromium.defaultViewport,
+      executablePath: await chromium.executablePath,
+      headless: chromium.headless
     });
 
     const page = await browser.newPage();
-
     await page.setViewport({ width: 1280, height: 1600 });
-
     await page.goto(reportUrl, { waitUntil: 'networkidle2', timeout: 0 });
 
-    await page.waitForSelector('#reportContent', { timeout: 15000 });
+    try {
+      await page.waitForSelector('#reportContent', { timeout: 15000 });
+      console.log("✅ Found #reportContent");
+    } catch (e) {
+      console.warn("⚠️ #reportContent not found in time, using manual delay...");
+      await page.waitForTimeout(5000);
+    }
+
+    await page.waitForTimeout(1500);
 
     const pdf = await page.pdf({
       format: 'A4',
