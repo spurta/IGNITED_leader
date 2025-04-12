@@ -1,7 +1,7 @@
-
 {
-  "name": "ignited-pdf-generator",
+  "name": "ignited-pdf-export",
   "version": "1.0.0",
+  "main": "server.js",
   "scripts": {
     "start": "node server.js"
   },
