@@ -1,7 +1,8 @@
-const express = require('express');
-const { jsPDF } = require('jspdf');
-const { JSDOM } = require('jsdom');
-const fetch = require('node-fetch');
+import express from 'express';
+import { jsPDF } from 'jspdf';
+import { JSDOM } from 'jsdom';
+import fetch from 'node-fetch';
+
 const app = express();
 
 app.get('/pdf', async (req, res) => {
@@ -33,7 +34,7 @@ app.get('/pdf', async (req, res) => {
       },
       x: 20,
       y: 20,
-      width: 555 // A4 width in points minus margin
+      width: 555
     });
   } catch (err) {
     console.error('❌ PDF Generation Error:', err.message);
