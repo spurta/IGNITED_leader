@@ -1,7 +1,9 @@
 import express from 'express';
-import { jsPDF } from 'jspdf';
-import { JSDOM } from 'jsdom';
 import fetch from 'node-fetch';
+import { JSDOM } from 'jsdom';
+import fs from 'fs';
+import path from 'path';
+import pdf from 'html-pdf-node';
 
 const app = express();
 
@@ -22,20 +24,32 @@ app.get('/pdf', async (req, res) => {
 
     if (!reportContent) throw new Error("#reportContent not found");
 
-    const doc = new jsPDF({ unit: 'pt', format: 'a4' });
-    await doc.html(reportContent, {
-      callback: (doc) => {
-        const pdf = doc.output('arraybuffer');
-        res.set({
-          'Content-Type': 'application/pdf',
-          'Content-Disposition': `attachment; filename="ignited-report-entry-${entry}.pdf"`,
-          'Content-Length': pdf.byteLength
-        });
-        res.send(Buffer.from(pdf));
-      },
-      x: 20,
-      y: 20,
-      width: 555
+    const fullHtml = `
+      <html>
+        <head>
+          <style>
+            body { font-family: Arial, sans-serif; padding: 2rem; }
+          </style>
+        </head>
+        <body>
+          ${reportContent.outerHTML}
+        </body>
+      </html>
+    `;
+
+    const file = { content: fullHtml };
+    const options = { format: 'A4' };
+
+    pdf.generatePdf(file, options).then(buffer => {
+      res.set({
+        'Content-Type': 'application/pdf',
+        'Content-Disposition': `attachment; filename="ignited-report-entry-${entry}.pdf"`,
+        'Content-Length': buffer.length
+      });
+      res.send(buffer);
+    }).catch(err => {
+      console.error('❌ PDF Generation Error:', err.message);
+      res.status(500).send('Failed to generate PDF');
     });
   } catch (err) {
     console.error('❌ PDF Generation Error:', err.message);
@@ -45,5 +59,5 @@ app.get('/pdf', async (req, res) => {
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`🚀 jsPDF PDF server running on port ${PORT}`);
+  console.log(`🚀 html-pdf-node server running on port ${PORT}`);
 });
