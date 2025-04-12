@@ -11,22 +11,18 @@ app.get('/pdf', async (req, res) => {
 
   try {
     const browser = await puppeteer.launch({
-      headless: 'new',
+      headless: true,
       args: ['--no-sandbox', '--disable-setuid-sandbox']
     });
 
     const page = await browser.newPage();
 
-    // Set a realistic viewport
     await page.setViewport({ width: 1280, height: 1600 });
 
-    // Go to the live report page
     await page.goto(reportUrl, { waitUntil: 'networkidle2', timeout: 0 });
 
-    // Wait for the reportContent element to appear
     await page.waitForSelector('#reportContent', { timeout: 15000 });
 
-    // Generate PDF
     const pdf = await page.pdf({
       format: 'A4',
       printBackground: true,
@@ -35,7 +31,6 @@ app.get('/pdf', async (req, res) => {
 
     await browser.close();
 
-    // Send PDF as attachment
     res.set({
       'Content-Type': 'application/pdf',
       'Content-Disposition': `attachment; filename="ignited-report-entry-${entry}.pdf"`,
@@ -49,7 +44,6 @@ app.get('/pdf', async (req, res) => {
   }
 });
 
-// Start server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`🚀 Puppeteer PDF server running on port ${PORT}`);
