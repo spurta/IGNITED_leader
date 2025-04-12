@@ -12,12 +12,11 @@ app.get('/pdf', async (req, res) => {
 
   try {
     const browser = await puppeteer.launch({
-  args: chromium.args,
-  defaultViewport: chromium.defaultViewport,
-  executablePath: await chromium.executablePath || '/usr/bin/google-chrome-stable',
-  headless: chromium.headless
-});
-
+      args: chromium.args,
+      defaultViewport: chromium.defaultViewport,
+      executablePath: await chromium.executablePath || '/usr/bin/google-chrome-stable',
+      headless: chromium.headless
+    });
 
     const page = await browser.newPage();
     await page.setViewport({ width: 1280, height: 1600 });
