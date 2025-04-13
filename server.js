@@ -8,7 +8,7 @@ app.get('/pdf', async (req, res) => {
   if (!entry) return res.status(400).send('Missing entry');
 
   const reportUrl = `https://leonpurton.com/ignited-results/?entry=${entry}`;
-  const apiUrl = `https://api.html2pdf.app/v1/generate?url=${encodeURIComponent(reportUrl)}&pdf.pageSize=A4&pdf.margin=1cm`;
+  const apiUrl = `https://api.html2pdf.app/v1/generate?url=${encodeURIComponent(reportUrl)}&apiKey=Qm4b18z0BjccgwIXlWMIzFEKLKG8HbyXXBTJoru0tLfm3HVUzsNI9lP0Uxikwb6m&pdf.pageSize=A4&pdf.margin=1cm`;
 
   try {
     console.log(`📄 Generating PDF for entry ${entry} via html2pdf.app...`);
